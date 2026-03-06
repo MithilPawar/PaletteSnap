@@ -1,7 +1,7 @@
 .upload-zone {
   background: var(--surface);
   border: 2px dashed var(--border);
-  border-radius: 20px;
+  border-radius: 22px;
   padding: 40px 24px;
   text-align: center;
   cursor: pointer;
@@ -15,7 +15,7 @@
 .upload-zone:hover,
 .upload-zone.drag-over {
   border-color: var(--accent);
-  background: rgba(240, 224, 64, 0.04);
+  background: rgba(255, 122, 47, 0.08);
   transform: translateY(-2px);
 }
 
@@ -35,7 +35,7 @@
 }
 
 .upload-zone h3 {
-  font-size: 1.1rem;
+  font-size: 1.18rem;
   font-weight: 700;
   margin-bottom: 6px;
 }
@@ -51,7 +51,7 @@
   gap: 12px;
   margin-bottom: 20px;
   color: var(--muted);
-  font-family: 'Space Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
   letter-spacing: 2px;
   animation: fadeUp 0.8s 0.25s ease both;
@@ -76,11 +76,11 @@
   flex: 1;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 14px 18px;
   color: var(--text);
-  font-family: 'Space Mono', monospace;
-  font-size: 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.84rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -91,16 +91,16 @@
 
 .url-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(240, 224, 64, 0.12);
+  box-shadow: 0 0 0 4px rgba(255, 122, 47, 0.18);
 }
 
 .btn-extract {
-  background: var(--accent);
-  color: #0a0a0f;
+  background: linear-gradient(135deg, var(--accent), #ff9d4d);
+  color: #fff;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 14px 24px;
-  font-family: 'Syne', sans-serif;
+  font-family: 'Outfit', sans-serif;
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
@@ -110,7 +110,7 @@
 
 .btn-extract:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(240, 224, 64, 0.3);
+  box-shadow: 0 12px 26px rgba(255, 122, 47, 0.32);
 }
 
 .btn-extract:active {
@@ -135,17 +135,17 @@
 .options-row label {
   font-size: 0.8rem;
   color: var(--muted);
-  font-family: 'Space Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .color-count-btn {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
-  border-radius: 8px;
+  border-radius: 11px;
   padding: 6px 14px;
-  font-family: 'Space Mono', monospace;
-  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -153,6 +153,6 @@
 .color-count-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #0a0a0f;
+  color: #fff;
   font-weight: 700;
 }
