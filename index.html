@@ -19,7 +19,7 @@
   </header>
 
   <div class="hero">
-    <h1>Extract <span>Colors</span><br />from Any Image</h1>
+    <h1>Extract <span>Colors</span><br />From Any Image</h1>
     <p>Upload an image or paste a URL. PaletteSnap instantly extracts dominant colors, shows hex codes, and lets you export the full palette.</p>
   </div>
 
@@ -34,9 +34,10 @@
   <div class="divider">OR USE URL</div>
 
   <div class="url-row">
-    <input class="url-input" id="urlInput" type="text" placeholder="https://example.com/image.jpg" />
+    <input class="url-input" id="urlInput" type="text" placeholder="https://example.com/image.jpg" aria-describedby="urlHelp" />
     <button class="btn-extract" id="urlBtn">Extract →</button>
   </div>
+  <p class="url-help" id="urlHelp">Use a direct image link ending with .png, .jpg, .jpeg, .webp, .gif, .svg, or .avif.</p>
 
   <div class="options-row">
     <span style="font-size:0.8rem;color:var(--muted);font-family:'JetBrains Mono',monospace;">COLORS:</span>

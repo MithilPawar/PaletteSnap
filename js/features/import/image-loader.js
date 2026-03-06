@@ -1,11 +1,35 @@
 import { showToast } from '../../core/utils.js';
 
-export function isValidImageUrl(url) {
+const IMAGE_EXTENSIONS_REGEX = /\.(png|jpe?g|webp|gif|bmp|svg|avif|ico|tiff?)(?:$|[?#])/i;
+
+export function validateImageUrl(url) {
   try {
     const parsed = new URL(url);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return {
+        valid: false,
+        reason: 'URL must start with http:// or https://'
+      };
+    }
+
+    const urlForExtensionCheck = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    if (!IMAGE_EXTENSIONS_REGEX.test(urlForExtensionCheck)) {
+      return {
+        valid: false,
+        reason: 'Please use a direct image URL ending in .png, .jpg, .jpeg, .webp, .gif, .svg, or .avif'
+      };
+    }
+
+    return {
+      valid: true,
+      normalizedUrl: parsed.toString()
+    };
   } catch {
-    return false;
+    return {
+      valid: false,
+      reason: 'Please enter a valid URL'
+    };
   }
 }
 

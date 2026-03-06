@@ -1,7 +1,7 @@
 import { appState } from '../../core/state.js';
 import { showToast } from '../../core/utils.js';
 import { wirePaletteActions } from '../export/palette-actions.js';
-import { isValidImageUrl, loadFile, loadUrl } from '../import/image-loader.js';
+import { loadFile, loadUrl, validateImageUrl } from '../import/image-loader.js';
 import { processImage } from '../palette/extractor.js';
 import {
   renderAccessibilityAudit,
@@ -70,13 +70,14 @@ export function initApp() {
     const url = urlInput.value.trim();
     if (!url) return;
 
-    if (!isValidImageUrl(url)) {
-      showToast('Please enter a valid image URL starting with http:// or https://');
+    const validation = validateImageUrl(url);
+    if (!validation.valid) {
+      showToast(validation.reason);
       return;
     }
 
     loadUrl(
-      url,
+      validation.normalizedUrl,
       (img, src, name) => {
         setPreviewImage(src);
         setFilename(name);
