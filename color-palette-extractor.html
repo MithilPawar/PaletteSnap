@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PaletteSnap — Color Palette Extractor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #1e1e2e;
+    --accent: #f0e040;
+    --accent2: #ff4f6d;
+    --text: #f0eff5;
+    --muted: #6b6b80;
+    --card: #18181f;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* animated bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 80% 10%, rgba(240,224,64,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255,79,109,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .grain {
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.5;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 2;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 56px;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+    box-shadow: 0 0 18px rgba(240,224,64,0.5);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  .badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    background: var(--border);
+    border: 1px solid #2e2e40;
+    color: var(--muted);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeUp 0.8s 0.1s ease both;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 span {
+    color: var(--accent);
+    text-shadow: 0 0 40px rgba(240,224,64,0.3);
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 1.05rem;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.7;
+    font-weight: 400;
+  }
+
+  /* Upload Zone */
+  .upload-zone {
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: 20px;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.25s, background 0.25s, transform 0.2s;
+    margin-bottom: 20px;
+    animation: fadeUp 0.8s 0.2s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(240,224,64,0.04);
+    transform: translateY(-2px);
+  }
+
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .upload-zone h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .upload-zone p {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    animation: fadeUp 0.8s 0.25s ease both;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* URL Input */
+  .url-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+
+  .url-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .url-input::placeholder { color: var(--muted); }
+
+  .url-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(240,224,64,0.12);
+  }
+
+  .btn-extract {
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-extract:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(240,224,64,0.3);
+  }
+
+  .btn-extract:active { transform: translateY(0); }
+
+  .btn-extract:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Count selector */
+  .options-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+    animation: fadeUp 0.8s 0.35s ease both;
+  }
+
+  .options-row label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .color-count-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .color-count-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0a0f;
+    font-weight: 700;
+  }
+
+  /* Preview */
+  #preview-section { display: none; animation: fadeUp 0.5s ease both; }
+
+  .preview-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+
+  .preview-img-wrap {
+    width: 100%;
+    max-height: 320px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .preview-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .preview-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  #filename { color: var(--text); }
+
+  /* Palette strip */
+  .palette-strip {
+    display: flex;
+    height: 56px;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  .palette-strip-color {
+    flex: 1;
+    transition: flex 0.3s ease;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .palette-strip-color:hover { flex: 2; }
+
+  /* Color cards */
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .color-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: popIn 0.4s ease both;
+  }
+
+  .color-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  }
+
+  .color-swatch {
+    height: 90px;
+    width: 100%;
+    position: relative;
+  }
+
+  .copy-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.4);
+    font-size: 0.7rem;
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    opacity: 0;
+    transition: opacity 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .color-card:hover .copy-hint { opacity: 1; }
+
+  .color-info {
+    padding: 10px 12px;
+  }
+
+  .color-hex {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .color-rgb {
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Actions */
+  .actions-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn-action {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-action:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-action.primary {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #fff;
+  }
+
+  .btn-action.primary:hover {
+    opacity: 0.85;
+    color: #fff;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--accent);
+    color: #0a0a0f;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    z-index: 9999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* Loader */
+  .loader {
+    display: none;
+    text-align: center;
+    padding: 40px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .loader-ring {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  .loader p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Stats */
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 18px;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  /* Animations */
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:none; } }
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:none; } }
+  @keyframes pulse    { 0%,100%{ box-shadow: 0 0 18px rgba(240,224,64,0.5); } 50%{ box-shadow: 0 0 32px rgba(240,224,64,0.8); } }
+  @keyframes spin     { to { transform: rotate(360deg); } }
+  @keyframes popIn    { from { opacity:0; transform: scale(0.85); } to { opacity:1; transform: scale(1); } }
+
+  canvas { display: none; }
+
+  @media (max-width: 560px) {
+    .url-row { flex-direction: column; }
+    .palette-grid { grid-template-columns: repeat(3, 1fr); }
+    .hero h1 { letter-spacing: -1px; }
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<div class="wrapper">
+  <header>
+    <div class="logo">
+      <span class="logo-dot"></span>
+      PaletteSnap
+    </div>
+    <span class="badge">v1.0 · FREE</span>
+  </header>
+
+  <div class="hero">
+    <h1>Extract <span>Colors</span><br/>from Any Image</h1>
+    <p>Upload an image or paste a URL. PaletteSnap instantly extracts dominant colors, shows hex codes, and lets you export the full palette.</p>
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-zone" id="dropZone">
+    <input type="file" id="fileInput" accept="image/*" />
+    <span class="upload-icon">🖼️</span>
+    <h3>Drop an image here</h3>
+    <p>PNG, JPG, WEBP, GIF — any image file</p>
+  </div>
+
+  <div class="divider">OR USE URL</div>
+
+  <div class="url-row">
+    <input class="url-input" id="urlInput" type="text" placeholder="https://example.com/image.jpg" />
+    <button class="btn-extract" id="urlBtn">Extract →</button>
+  </div>
+
+  <div class="options-row">
+    <span style="font-size:0.8rem;color:var(--muted);font-family:'Space Mono',monospace;">COLORS:</span>
+    <button class="color-count-btn" data-count="4">4</button>
+    <button class="color-count-btn active" data-count="6">6</button>
+    <button class="color-count-btn" data-count="8">8</button>
+    <button class="color-count-btn" data-count="12">12</button>
+  </div>
+
+  <!-- Loader -->
+  <div class="loader" id="loader">
+    <div class="loader-ring"></div>
+    <p>Sampling pixels...</p>
+  </div>
+
+  <!-- Results -->
+  <div id="preview-section">
+    <div class="preview-wrap">
+      <div class="preview-img-wrap">
+        <img id="previewImg" src="" alt="preview" crossorigin="anonymous"/>
+      </div>
+      <div class="preview-bar">
+        <span id="filename">image.jpg</span>
+        <span id="dimensions">—</span>
+      </div>
+    </div>
+
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="palette-strip" id="paletteStrip"></div>
+
+    <div class="palette-grid" id="paletteGrid"></div>
+
+    <div class="actions-row">
+      <button class="btn-action" id="copyAllBtn">📋 Copy All HEX</button>
+      <button class="btn-action" id="copyCssBtn">🎨 Copy CSS Variables</button>
+      <button class="btn-action primary" id="downloadBtn">⬇ Download PNG Palette</button>
+      <button class="btn-action" id="resetBtn">↩ New Image</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+  let colorCount = 6;
+  let currentColors = [];
+  let currentImgEl = null;
+
+  // Color count buttons
+  document.querySelectorAll('.color-count-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.color-count-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      colorCount = parseInt(btn.dataset.count);
+      if (currentImgEl) processImage(currentImgEl);
+    });
+  });
+
+  // Drop zone
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) loadFile(file);
+  });
+
+  document.getElementById('fileInput').addEventListener('change', e => {
+    if (e.target.files[0]) loadFile(e.target.files[0]);
+  });
+
+  document.getElementById('urlBtn').addEventListener('click', () => {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) return;
+    loadUrl(url);
+  });
+
+  document.getElementById('urlInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('urlBtn').click();
+  });
+
+  function loadFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        document.getElementById('filename').textContent = file.name;
+        processImage(img);
+      };
+      img.src = e.target.result;
+      document.getElementById('previewImg').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function loadUrl(url) {
+    showLoader(true);
+    // Use a CORS proxy for cross-origin images
+    const proxied = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      document.getElementById('previewImg').src = img.src;
+      document.getElementById('filename').textContent = url.split('/').pop() || 'image';
+      processImage(img);
+      showLoader(false);
+    };
+    img.onerror = () => {
+      showLoader(false);
+      showToast('❌ Could not load image. Try uploading directly.');
+    };
+    img.src = proxied;
+  }
+
+  function showLoader(show) {
+    document.getElementById('loader').style.display = show ? 'block' : 'none';
+    document.getElementById('preview-section').style.display = show ? 'none' : 'block';
+  }
+
+  function processImage(img) {
+    showLoader(true);
+    currentImgEl = img;
+    setTimeout(() => {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const size = 150;
+      canvas.width = size;
+      canvas.height = size;
+      ctx.drawImage(img, 0, 0, size, size);
+      const data = ctx.getImageData(0, 0, size, size).data;
+      const colors = extractColors(data, colorCount);
+      currentColors = colors;
+      document.getElementById('dimensions').textContent = `${img.naturalWidth || img.width} × ${img.naturalHeight || img.height}px`;
+      renderPalette(colors);
+      renderStats(colors);
+      showLoader(false);
+    }, 50);
+  }
+
+  function extractColors(data, count) {
+    // Simple k-means-like quantization by sampling + clustering
+    const pixels = [];
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+      if (a < 128) continue;
+      // Skip near-white and near-black to get interesting colors
+      pixels.push([r, g, b]);
+    }
+
+    // Sample down
+    const sample = [];
+    const step = Math.max(1, Math.floor(pixels.length / 800));
+    for (let i = 0; i < pixels.length; i += step) sample.push(pixels[i]);
+
+    // Quantize into buckets
+    const bucketSize = 32;
+    const buckets = {};
+    for (const [r,g,b] of sample) {
+      const key = `${Math.floor(r/bucketSize)},${Math.floor(g/bucketSize)},${Math.floor(b/bucketSize)}`;
+      if (!buckets[key]) buckets[key] = { sum: [0,0,0], count: 0 };
+      buckets[key].sum[0] += r;
+      buckets[key].sum[1] += g;
+      buckets[key].sum[2] += b;
+      buckets[key].count++;
+    }
+
+    // Sort by frequency
+    const sorted = Object.values(buckets).sort((a,b) => b.count - a.count);
+
+    // Pick diverse colors
+    const result = [];
+    for (const bucket of sorted) {
+      if (result.length >= count) break;
+      const r = Math.round(bucket.sum[0] / bucket.count);
+      const g = Math.round(bucket.sum[1] / bucket.count);
+      const b = Math.round(bucket.sum[2] / bucket.count);
+      // Check distance from existing
+      let tooClose = false;
+      for (const c of result) {
+        const dist = Math.sqrt((r-c[0])**2 + (g-c[1])**2 + (b-c[2])**2);
+        if (dist < 55) { tooClose = true; break; }
+      }
+      if (!tooClose) result.push([r,g,b]);
+    }
+
+    // Fill if not enough
+    let idx = 0;
+    while (result.length < count && idx < sorted.length) {
+      const bucket = sorted[idx++];
+      const r = Math.round(bucket.sum[0] / bucket.count);
+      const g = Math.round(bucket.sum[1] / bucket.count);
+      const b = Math.round(bucket.sum[2] / bucket.count);
+      if (!result.find(c => c[0]===r && c[1]===g && c[2]===b)) result.push([r,g,b]);
+    }
+
+    return result.slice(0, count);
+  }
+
+  function toHex([r,g,b]) {
+    return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('').toUpperCase();
+  }
+
+  function getLuminance([r,g,b]) {
+    return 0.299*r + 0.587*g + 0.114*b;
+  }
+
+  function renderPalette(colors) {
+    // Strip
+    const strip = document.getElementById('paletteStrip');
+    strip.innerHTML = '';
+    colors.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'palette-strip-color';
+      div.style.background = `rgb(${c[0]},${c[1]},${c[2]})`;
+      div.title = toHex(c);
+      div.onclick = () => { copyText(toHex(c)); showToast(`Copied ${toHex(c)}`); };
+      strip.appendChild(div);
+    });
+
+    // Grid
+    const grid = document.getElementById('paletteGrid');
+    grid.innerHTML = '';
+    colors.forEach((c, i) => {
+      const hex = toHex(c);
+      const lum = getLuminance(c);
+      const textColor = lum > 128 ? '#1a1a1a' : '#f0f0f0';
+      const card = document.createElement('div');
+      card.className = 'color-card';
+      card.style.animationDelay = `${i * 0.05}s`;
+      card.innerHTML = `
+        <div class="color-swatch" style="background:rgb(${c[0]},${c[1]},${c[2]})">
+          <div class="copy-hint" style="color:${textColor}">CLICK TO COPY</div>
+        </div>
+        <div class="color-info">
+          <div class="color-hex">${hex}</div>
+          <div class="color-rgb">rgb(${c[0]}, ${c[1]}, ${c[2]})</div>
+        </div>`;
+      card.onclick = () => { copyText(hex); showToast(`Copied ${hex}!`); };
+      grid.appendChild(card);
+    });
+
+    document.getElementById('preview-section').style.display = 'block';
+  }
+
+  function renderStats(colors) {
+    const avgLum = colors.reduce((s, c) => s + getLuminance(c), 0) / colors.length;
+    const tone = avgLum > 200 ? 'Light' : avgLum > 100 ? 'Balanced' : 'Dark';
+    const hues = colors.map(([r,g,b]) => {
+      const max = Math.max(r,g,b), min = Math.min(r,g,b);
+      if (max === min) return 0;
+      const d = max - min;
+      let h = max===r ? (g-b)/d + (g<b?6:0) : max===g ? (b-r)/d+2 : (r-g)/d+4;
+      return h * 60;
+    });
+    const hueRange = Math.max(...hues) - Math.min(...hues);
+    const variety = hueRange > 180 ? 'Diverse' : hueRange > 90 ? 'Varied' : 'Monochromatic';
+
+    document.getElementById('statsRow').innerHTML = `
+      <div class="stat"><div class="stat-label">COLORS</div><div class="stat-value">${colors.length}</div></div>
+      <div class="stat"><div class="stat-label">TONE</div><div class="stat-value">${tone}</div></div>
+      <div class="stat"><div class="stat-label">VARIETY</div><div class="stat-value">${variety}</div></div>
+      <div class="stat"><div class="stat-label">AVG BRIGHTNESS</div><div class="stat-value">${Math.round(avgLum)}</div></div>
+    `;
+  }
+
+  // Action buttons
+  document.getElementById('copyAllBtn').onclick = () => {
+    const hexList = currentColors.map(toHex).join(', ');
+    copyText(hexList);
+    showToast('All HEX codes copied!');
+  };
+
+  document.getElementById('copyCssBtn').onclick = () => {
+    const vars = currentColors.map((c,i) => `  --color-${i+1}: ${toHex(c)};`).join('\n');
+    copyText(`:root {\n${vars}\n}`);
+    showToast('CSS variables copied!');
+  };
+
+  document.getElementById('downloadBtn').onclick = () => {
+    const c = document.createElement('canvas');
+    const cols = currentColors.length;
+    const sw = 140, sh = 100;
+    c.width = sw * cols;
+    c.height = sh + 40;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#13131a';
+    ctx.fillRect(0, 0, c.width, c.height);
+    currentColors.forEach(([r,g,b], i) => {
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(i * sw, 0, sw, sh);
+      ctx.fillStyle = '#f0eff5';
+      ctx.font = 'bold 12px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(toHex([r,g,b]), i * sw + sw/2, sh + 24);
+    });
+    const a = document.createElement('a');
+    a.download = 'palette-snap.png';
+    a.href = c.toDataURL();
+    a.click();
+    showToast('Palette downloaded!');
+  };
+
+  document.getElementById('resetBtn').onclick = () => {
+    document.getElementById('preview-section').style.display = 'none';
+    document.getElementById('urlInput').value = '';
+    document.getElementById('fileInput').value = '';
+    currentColors = [];
+    currentImgEl = null;
+  };
+
+  function copyText(text) {
+    navigator.clipboard.writeText(text).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    });
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>
