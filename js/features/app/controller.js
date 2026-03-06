@@ -57,13 +57,28 @@ export function initApp() {
   }
 
   function handleFile(file) {
-    if (!file || !file.type.startsWith('image/')) return;
+    if (!file) {
+      showToast('Please choose an image file to extract colors.');
+      return;
+    }
 
-    loadFile(file, (img, src, name) => {
-      setPreviewImage(src);
-      setFilename(name);
-      processAndRender(img);
-    });
+    if (!file.type || !file.type.startsWith('image/')) {
+      showToast('Unsupported file type. Please upload PNG, JPG, WEBP, GIF, or SVG.');
+      return;
+    }
+
+    loadFile(
+      file,
+      (img, src, name) => {
+        setPreviewImage(src);
+        setFilename(name);
+        processAndRender(img);
+      },
+      (message) => {
+        setLoaderVisible(false);
+        showToast(message);
+      }
+    );
   }
 
   function handleUrl() {

@@ -33,13 +33,32 @@ export function validateImageUrl(url) {
   }
 }
 
-export function loadFile(file, onReady) {
+export function loadFile(file, onReady, onError) {
   const reader = new FileReader();
+
+  reader.onerror = () => {
+    if (onError) {
+      onError('Could not read this file. Please try another image.');
+      return;
+    }
+    showToast('Could not read this file. Please try another image.');
+  };
+
   reader.onload = (e) => {
     const img = new Image();
+
+    img.onerror = () => {
+      if (onError) {
+        onError('This file could not be decoded as an image. Try PNG, JPG, WEBP, or GIF.');
+        return;
+      }
+      showToast('This file could not be decoded as an image. Try PNG, JPG, WEBP, or GIF.');
+    };
+
     img.onload = () => onReady(img, e.target.result, file.name);
     img.src = e.target.result;
   };
+
   reader.readAsDataURL(file);
 }
 

@@ -107,6 +107,16 @@ export function renderPalette(palette) {
 }
 
 export function renderStats(colors) {
+  if (!colors || !colors.length) {
+    document.getElementById('statsRow').innerHTML = `
+      <div class="stat"><div class="stat-label">COLORS</div><div class="stat-value">0</div></div>
+      <div class="stat"><div class="stat-label">TONE</div><div class="stat-value">N/A</div></div>
+      <div class="stat"><div class="stat-label">VARIETY</div><div class="stat-value">N/A</div></div>
+      <div class="stat"><div class="stat-label">AVG BRIGHTNESS</div><div class="stat-value">0</div></div>
+    `;
+    return;
+  }
+
   const avgLum = colors.reduce((sum, c) => sum + getLuminance(c), 0) / colors.length;
   const tone = avgLum > 200 ? 'Light' : avgLum > 100 ? 'Balanced' : 'Dark';
 
