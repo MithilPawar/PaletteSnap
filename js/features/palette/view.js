@@ -17,6 +17,19 @@ export function setDimensions(width, height) {
   document.getElementById('dimensions').textContent = `${width} x ${height}px`;
 }
 
+export function revealResults() {
+  const section = document.getElementById('preview-section');
+  const wrap = section.querySelector('.preview-wrap');
+
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (wrap) {
+    wrap.classList.remove('result-flash');
+    // Re-trigger animation for repeated extractions.
+    void wrap.offsetWidth;
+    wrap.classList.add('result-flash');
+  }
+}
+
 export function renderPalette(palette) {
   const colors = palette.map((item) => item.rgb);
 
@@ -28,10 +41,24 @@ export function renderPalette(palette) {
     div.className = 'palette-strip-color';
     div.style.background = `rgb(${c[0]},${c[1]},${c[2]})`;
     div.title = toHex(c);
-    div.onclick = () => {
+
+    const hex = toHex(c);
+    const copyStripColor = () => {
       copyText(toHex(c));
       showToast(`Copied ${toHex(c)}`);
     };
+
+    div.setAttribute('role', 'button');
+    div.setAttribute('tabindex', '0');
+    div.setAttribute('aria-label', `Copy color ${hex}`);
+    div.onclick = copyStripColor;
+    div.onkeydown = (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        copyStripColor();
+      }
+    };
+
     strip.appendChild(div);
   });
 
@@ -57,10 +84,22 @@ export function renderPalette(palette) {
         <div class="color-share">${item.share}% of image</div>
       </div>`;
 
-    card.onclick = () => {
+    const copyCardColor = () => {
       copyText(hex);
       showToast(`Copied ${hex}!`);
     };
+
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', `Copy ${hex} color values`);
+    card.onclick = copyCardColor;
+    card.onkeydown = (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        copyCardColor();
+      }
+    };
+
     grid.appendChild(card);
   });
 

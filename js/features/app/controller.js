@@ -6,6 +6,7 @@ import { processImage } from '../palette/extractor.js';
 import {
   renderAccessibilityAudit,
   renderPalette,
+  revealResults,
   renderStats,
   setDimensions,
   setFilename,
@@ -51,6 +52,7 @@ export function initApp() {
       renderAccessibilityAudit(result.colors);
       actions.setActionsEnabled(true);
       setLoaderVisible(false);
+      revealResults();
     }, 50);
   }
 
