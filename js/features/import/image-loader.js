@@ -1,4 +1,4 @@
-import { showToast } from './utils.js';
+import { showToast } from '../../core/utils.js';
 
 export function loadFile(file, onReady) {
   const reader = new FileReader();

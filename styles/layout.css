@@ -1,0 +1,73 @@
+.wrapper {
+  position: relative;
+  z-index: 2;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 56px;
+  animation: fadeDown 0.7s ease both;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.logo-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  box-shadow: 0 0 18px rgba(240, 224, 64, 0.5);
+  animation: pulse 2.5s ease-in-out infinite;
+}
+
+.badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  background: var(--border);
+  border: 1px solid #2e2e40;
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 48px;
+  animation: fadeUp 0.8s 0.1s ease both;
+}
+
+.hero h1 {
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  margin-bottom: 16px;
+}
+
+.hero h1 span {
+  color: var(--accent);
+  text-shadow: 0 0 40px rgba(240, 224, 64, 0.3);
+}
+
+.hero p {
+  color: var(--muted);
+  font-size: 1.05rem;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.7;
+  font-weight: 400;
+}
