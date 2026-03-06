@@ -4,6 +4,7 @@ import { wirePaletteActions } from '../export/palette-actions.js';
 import { isValidImageUrl, loadFile, loadUrl } from '../import/image-loader.js';
 import { processImage } from '../palette/extractor.js';
 import {
+  renderAccessibilityAudit,
   renderPalette,
   renderStats,
   setDimensions,
@@ -47,6 +48,7 @@ export function initApp() {
       setDimensions(result.width, result.height);
       renderPalette(result.palette);
       renderStats(result.colors);
+      renderAccessibilityAudit(result.colors);
       actions.setActionsEnabled(true);
       setLoaderVisible(false);
     }, 50);

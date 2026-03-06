@@ -1,4 +1,4 @@
-import { copyText, getLuminance, showToast, toHex } from '../../core/utils.js';
+import { copyText, getContrastRatio, getLuminance, showToast, toHex } from '../../core/utils.js';
 
 export function setLoaderVisible(show) {
   document.getElementById('loader').style.display = show ? 'block' : 'none';
@@ -93,4 +93,67 @@ export function renderStats(colors) {
     <div class="stat"><div class="stat-label">VARIETY</div><div class="stat-value">${variety}</div></div>
     <div class="stat"><div class="stat-label">AVG BRIGHTNESS</div><div class="stat-value">${Math.round(avgLum)}</div></div>
   `;
+}
+
+function getContrastStatuses(ratio) {
+  return {
+    aaLarge: ratio >= 3,
+    aaNormal: ratio >= 4.5,
+    aaaLarge: ratio >= 4.5,
+    aaaNormal: ratio >= 7
+  };
+}
+
+export function renderAccessibilityAudit(colors) {
+  const contrastGrid = document.getElementById('contrastGrid');
+  const contrastSummary = document.getElementById('contrastSummary');
+  contrastGrid.innerHTML = '';
+
+  if (colors.length < 2) {
+    contrastSummary.textContent = 'Need at least 2 colors to evaluate contrast pairs.';
+    return;
+  }
+
+  const pairs = [];
+  for (let i = 0; i < colors.length; i += 1) {
+    for (let j = i + 1; j < colors.length; j += 1) {
+      const first = colors[i];
+      const second = colors[j];
+      const ratio = getContrastRatio(first, second);
+      pairs.push({
+        first,
+        second,
+        ratio,
+        statuses: getContrastStatuses(ratio)
+      });
+    }
+  }
+
+  pairs.sort((a, b) => b.ratio - a.ratio);
+
+  const aaPasses = pairs.filter((pair) => pair.statuses.aaNormal).length;
+  contrastSummary.textContent = `${aaPasses}/${pairs.length} pairs pass WCAG AA for normal text.`;
+
+  pairs.forEach((pair) => {
+    const firstHex = toHex(pair.first);
+    const secondHex = toHex(pair.second);
+
+    const card = document.createElement('article');
+    card.className = 'contrast-card';
+    card.innerHTML = `
+      <div class="contrast-preview">
+        <span style="background:${firstHex}"></span>
+        <span style="background:${secondHex}"></span>
+      </div>
+      <div class="contrast-pair">${firstHex} vs ${secondHex}</div>
+      <div class="contrast-ratio">${pair.ratio.toFixed(2)}:1</div>
+      <div class="contrast-badges">
+        <span class="contrast-badge ${pair.statuses.aaNormal ? 'pass' : 'fail'}">AA Text</span>
+        <span class="contrast-badge ${pair.statuses.aaaNormal ? 'pass' : 'fail'}">AAA Text</span>
+        <span class="contrast-badge ${pair.statuses.aaLarge ? 'pass' : 'fail'}">AA Large</span>
+        <span class="contrast-badge ${pair.statuses.aaaLarge ? 'pass' : 'fail'}">AAA Large</span>
+      </div>
+    `;
+    contrastGrid.appendChild(card);
+  });
 }
