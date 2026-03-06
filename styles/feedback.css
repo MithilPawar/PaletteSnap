@@ -97,6 +97,10 @@
     flex-direction: column;
   }
 
+  .use-case-grid {
+    grid-template-columns: 1fr;
+  }
+
   .palette-grid {
     grid-template-columns: repeat(3, 1fr);
   }

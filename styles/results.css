@@ -124,6 +124,13 @@
   font-family: 'Space Mono', monospace;
 }
 
+.color-share {
+  margin-top: 4px;
+  font-size: 0.68rem;
+  color: var(--accent);
+  font-family: 'Space Mono', monospace;
+}
+
 .stats-row {
   display: flex;
   gap: 16px;
@@ -187,4 +194,11 @@
 .btn-action.primary:hover {
   opacity: 0.85;
   color: #fff;
+}
+
+.btn-action:disabled,
+.btn-action[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
 }

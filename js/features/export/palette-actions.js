@@ -1,14 +1,28 @@
 import { copyText, showToast, toHex } from '../../core/utils.js';
 
 export function wirePaletteActions(getColors, onReset) {
+  const actionIds = ['copyAllBtn', 'copyCssBtn', 'downloadBtn'];
+
+  function setActionsEnabled(enabled) {
+    actionIds.forEach((id) => {
+      const button = document.getElementById(id);
+      button.disabled = !enabled;
+      button.setAttribute('aria-disabled', String(!enabled));
+    });
+  }
+
   document.getElementById('copyAllBtn').onclick = () => {
-    const hexList = getColors().map(toHex).join(', ');
+    const colors = getColors();
+    if (!colors.length) return;
+    const hexList = colors.map(toHex).join(', ');
     copyText(hexList);
     showToast('All HEX codes copied!');
   };
 
   document.getElementById('copyCssBtn').onclick = () => {
-    const vars = getColors()
+    const colors = getColors();
+    if (!colors.length) return;
+    const vars = colors
       .map((c, i) => `  --color-${i + 1}: ${toHex(c)};`)
       .join('\n');
     copyText(`:root {\n${vars}\n}`);
@@ -17,6 +31,7 @@ export function wirePaletteActions(getColors, onReset) {
 
   document.getElementById('downloadBtn').onclick = () => {
     const colors = getColors();
+    if (!colors.length) return;
     const c = document.createElement('canvas');
     const cols = colors.length;
     const sw = 140;
@@ -46,4 +61,7 @@ export function wirePaletteActions(getColors, onReset) {
   };
 
   document.getElementById('resetBtn').onclick = onReset;
+
+  setActionsEnabled(false);
+  return { setActionsEnabled };
 }

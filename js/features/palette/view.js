@@ -17,7 +17,9 @@ export function setDimensions(width, height) {
   document.getElementById('dimensions').textContent = `${width} x ${height}px`;
 }
 
-export function renderPalette(colors) {
+export function renderPalette(palette) {
+  const colors = palette.map((item) => item.rgb);
+
   const strip = document.getElementById('paletteStrip');
   strip.innerHTML = '';
 
@@ -36,7 +38,8 @@ export function renderPalette(colors) {
   const grid = document.getElementById('paletteGrid');
   grid.innerHTML = '';
 
-  colors.forEach((c, i) => {
+  palette.forEach((item, i) => {
+    const c = item.rgb;
     const hex = toHex(c);
     const lum = getLuminance(c);
     const textColor = lum > 128 ? '#1a1a1a' : '#f0f0f0';
@@ -51,6 +54,7 @@ export function renderPalette(colors) {
       <div class="color-info">
         <div class="color-hex">${hex}</div>
         <div class="color-rgb">rgb(${c[0]}, ${c[1]}, ${c[2]})</div>
+        <div class="color-share">${item.share}% of image</div>
       </div>`;
 
     card.onclick = () => {

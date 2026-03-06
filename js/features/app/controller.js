@@ -1,7 +1,7 @@
 import { appState } from '../../core/state.js';
 import { showToast } from '../../core/utils.js';
 import { wirePaletteActions } from '../export/palette-actions.js';
-import { loadFile, loadUrl } from '../import/image-loader.js';
+import { isValidImageUrl, loadFile, loadUrl } from '../import/image-loader.js';
 import { processImage } from '../palette/extractor.js';
 import {
   renderPalette,
@@ -18,24 +18,36 @@ export function initApp() {
   const urlInput = document.getElementById('urlInput');
   const urlBtn = document.getElementById('urlBtn');
   const canvas = document.getElementById('canvas');
+  const actions = wirePaletteActions(getCurrentColors, resetApp);
 
   function processAndRender(img) {
     setLoaderVisible(true);
     appState.currentImgEl = img;
 
     setTimeout(() => {
-      const result = processImage(img, appState.colorCount, canvas);
+      let result;
+      try {
+        result = processImage(img, appState.colorCount, canvas);
+      } catch (error) {
+        setLoaderVisible(false);
+        showToast(error.message || 'Could not extract colors from this image.');
+        actions.setActionsEnabled(false);
+        return;
+      }
+
       appState.currentColors = result.colors;
 
       if (!result.colors.length) {
         setLoaderVisible(false);
         showToast('No visible pixels found in image.');
+        actions.setActionsEnabled(false);
         return;
       }
 
       setDimensions(result.width, result.height);
-      renderPalette(result.colors);
+      renderPalette(result.palette);
       renderStats(result.colors);
+      actions.setActionsEnabled(true);
       setLoaderVisible(false);
     }, 50);
   }
@@ -54,6 +66,11 @@ export function initApp() {
     const url = urlInput.value.trim();
     if (!url) return;
 
+    if (!isValidImageUrl(url)) {
+      showToast('Please enter a valid image URL starting with http:// or https://');
+      return;
+    }
+
     loadUrl(
       url,
       (img, src, name) => {
@@ -62,7 +79,8 @@ export function initApp() {
         processAndRender(img);
       },
       () => setLoaderVisible(true),
-      () => setLoaderVisible(false)
+      () => setLoaderVisible(false),
+      (message) => showToast(message)
     );
   }
 
@@ -72,6 +90,7 @@ export function initApp() {
     fileInput.value = '';
     appState.currentColors = [];
     appState.currentImgEl = null;
+    actions.setActionsEnabled(false);
   }
 
   function bindColorCountButtons() {
@@ -115,5 +134,4 @@ export function initApp() {
   bindColorCountButtons();
   bindDnD();
   bindInputs();
-  wirePaletteActions(getCurrentColors, resetApp);
 }
